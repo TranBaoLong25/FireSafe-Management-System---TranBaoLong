@@ -1,0 +1,149 @@
+# FireSafe - chạy toàn bộ: docker compose up --build
+# Mỗi service 1 database riêng (Database per Service)
+services:
+  auth-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pccc_auth
+    ports: ["5433:5432"]
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+      - ./pccc-service-auth/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth:
+    build: ./pccc-service-auth
+    environment:
+      PORT: 3001
+      SERVICE_NAME: pccc-service-auth
+      DATABASE_URL: postgres://postgres:postgres@auth-db:5432/pccc_auth
+      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+    ports: ["3001:3001"]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  facility-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pccc_facility
+    ports: ["5434:5432"]
+    volumes:
+      - facility-data:/var/lib/postgresql/data
+      - ./pccc-service-facility/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_facility"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  facility:
+    build: ./pccc-service-facility
+    environment:
+      PORT: 3002
+      SERVICE_NAME: pccc-service-facility
+      DATABASE_URL: postgres://postgres:postgres@facility-db:5432/pccc_facility
+      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+    ports: ["3002:3002"]
+    depends_on:
+      facility-db:
+        condition: service_healthy
+
+  equipment-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pccc_equipment
+    ports: ["5435:5432"]
+    volumes:
+      - equipment-data:/var/lib/postgresql/data
+      - ./pccc-service-equipment/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_equipment"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  equipment:
+    build: ./pccc-service-equipment
+    environment:
+      PORT: 3003
+      SERVICE_NAME: pccc-service-equipment
+      DATABASE_URL: postgres://postgres:postgres@equipment-db:5432/pccc_equipment
+      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+    ports: ["3003:3003"]
+    depends_on:
+      equipment-db:
+        condition: service_healthy
+
+  inspection-db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pccc_inspection
+    ports: ["5436:5432"]
+    volumes:
+      - inspection-data:/var/lib/postgresql/data
+      - ./pccc-service-inspection/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_inspection"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  inspection:
+    build: ./pccc-service-inspection
+    environment:
+      PORT: 3004
+      SERVICE_NAME: pccc-service-inspection
+      DATABASE_URL: postgres://postgres:postgres@inspection-db:5432/pccc_inspection
+      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+    ports: ["3004:3004"]
+    depends_on:
+      inspection-db:
+        condition: service_healthy
+
+  incident-gis-db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pccc_incident_gis
+    ports: ["5437:5432"]
+    volumes:
+      - incident-gis-data:/var/lib/postgresql/data
+      - ./pccc-service-incident-gis/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_incident_gis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  incident-gis:
+    build: ./pccc-service-incident-gis
+    environment:
+      PORT: 3005
+      SERVICE_NAME: pccc-service-incident-gis
+      DATABASE_URL: postgres://postgres:postgres@incident-gis-db:5432/pccc_incident_gis
+      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+    ports: ["3005:3005"]
+    depends_on:
+      incident-gis-db:
+        condition: service_healthy
+
+volumes:
+  auth-data:
+  facility-data:
+  equipment-data:
+  inspection-data:
+  incident-gis-data:
