@@ -2,6 +2,9 @@
 # Mỗi service 1 CSDL riêng (Database per Service, checklist #3).
 # Frontend/Postman chỉ gọi qua gateway: http://localhost:8088/api/v1/...  (#4)
 # Mật khẩu CSDL và khóa JWT đọc từ .env, thiếu thì compose báo lỗi (#40).
+# Tên dự án riêng: không dùng chung container/volume với thư mục khác cũng tên firesafe-boilerplate (vd bản FULL)
+name: firesafe-g18
+
 services:
   auth-db:
     image: postgres:16
