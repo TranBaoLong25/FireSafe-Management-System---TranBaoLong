@@ -25,13 +25,17 @@ firesafe/
 
 ## Chạy nhanh (Docker)
 ```bash
-cp .env.example .env
-docker compose up --build
-# tạo admin đầu tiên (sau khi auth chạy):
+cp .env.example .env            # rồi đổi JWT_SECRET, DB_PASSWORD
+docker compose up -d --build    # 5 CSDL + 5 service + gateway (11 container)
+docker compose ps               # đợi tất cả "healthy"
+curl localhost:8088/health      # gateway
+# tạo admin đầu tiên:
 docker compose exec -e ADMIN_PASSWORD='Admin@12345' auth npm run seed:admin
-curl -X POST localhost:3001/api/v1/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"Admin@12345"}'
+curl -X POST localhost:8088/api/v1/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"Admin@12345"}'
 ```
-Script trong `db/init/` chỉ tự chạy **lần đầu** khi volume DB còn trống. Muốn chạy lại từ đầu: `docker compose down -v`.
+Mọi API gọi qua gateway `http://localhost:8088/api/v1/...`; cổng riêng 3001–3005 chỉ để gỡ lỗi.
+Thiếu `JWT_SECRET` hoặc `DB_PASSWORD` trong `.env` thì compose dừng và báo lỗi.
+Script trong `db/init/` chỉ tự chạy **lần đầu** khi volume CSDL còn trống. Muốn chạy lại từ đầu: `docker compose down -v`.
 
 ## Chạy tay (không Docker)
 ```bash
