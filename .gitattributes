@@ -1,0 +1,7 @@
+# Lưu file văn bản với xuống dòng LF trong repo, Windows tự đổi khi checkout
+* text=auto
+*.sh  text eol=lf
+*.docx binary
+*.png  binary
+*.jpg  binary
+*.pdf  binary
