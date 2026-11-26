@@ -1,16 +1,18 @@
-# FireSafe - chạy toàn bộ: docker compose up --build
-# Mỗi service 1 database riêng (Database per Service)
+# FireSafe – chạy toàn bộ: cp .env.example .env  rồi  docker compose up --build
+# Mỗi service 1 CSDL riêng (Database per Service, checklist #3).
+# Frontend/Postman chỉ gọi qua gateway: http://localhost:8088/api/v1/...  (#4)
+# Mật khẩu CSDL và khóa JWT đọc từ .env, thiếu thì compose báo lỗi (#40).
 services:
   auth-db:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
       POSTGRES_DB: pccc_auth
     ports: ["5433:5432"]
     volumes:
       - auth-data:/var/lib/postgresql/data
-      - ./pccc-service-auth/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+      - ./pccc-service-auth/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo CSDL lần đầu
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_auth"]
       interval: 5s
@@ -22,9 +24,16 @@ services:
     environment:
       PORT: 3001
       SERVICE_NAME: pccc-service-auth
-      DATABASE_URL: postgres://postgres:postgres@auth-db:5432/pccc_auth
-      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@auth-db:5432/pccc_auth
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports: ["3001:3001"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       auth-db:
         condition: service_healthy
@@ -33,12 +42,12 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
       POSTGRES_DB: pccc_facility
     ports: ["5434:5432"]
     volumes:
       - facility-data:/var/lib/postgresql/data
-      - ./pccc-service-facility/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+      - ./pccc-service-facility/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo CSDL lần đầu
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_facility"]
       interval: 5s
@@ -50,9 +59,16 @@ services:
     environment:
       PORT: 3002
       SERVICE_NAME: pccc-service-facility
-      DATABASE_URL: postgres://postgres:postgres@facility-db:5432/pccc_facility
-      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@facility-db:5432/pccc_facility
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports: ["3002:3002"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       facility-db:
         condition: service_healthy
@@ -61,12 +77,12 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
       POSTGRES_DB: pccc_equipment
     ports: ["5435:5432"]
     volumes:
       - equipment-data:/var/lib/postgresql/data
-      - ./pccc-service-equipment/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+      - ./pccc-service-equipment/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo CSDL lần đầu
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_equipment"]
       interval: 5s
@@ -78,9 +94,16 @@ services:
     environment:
       PORT: 3003
       SERVICE_NAME: pccc-service-equipment
-      DATABASE_URL: postgres://postgres:postgres@equipment-db:5432/pccc_equipment
-      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@equipment-db:5432/pccc_equipment
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports: ["3003:3003"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       equipment-db:
         condition: service_healthy
@@ -89,12 +112,12 @@ services:
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
       POSTGRES_DB: pccc_inspection
     ports: ["5436:5432"]
     volumes:
       - inspection-data:/var/lib/postgresql/data
-      - ./pccc-service-inspection/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+      - ./pccc-service-inspection/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo CSDL lần đầu
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_inspection"]
       interval: 5s
@@ -106,9 +129,16 @@ services:
     environment:
       PORT: 3004
       SERVICE_NAME: pccc-service-inspection
-      DATABASE_URL: postgres://postgres:postgres@inspection-db:5432/pccc_inspection
-      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@inspection-db:5432/pccc_inspection
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports: ["3004:3004"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       inspection-db:
         condition: service_healthy
@@ -117,12 +147,12 @@ services:
     image: postgis/postgis:16-3.4
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
       POSTGRES_DB: pccc_incident_gis
     ports: ["5437:5432"]
     volumes:
       - incident-gis-data:/var/lib/postgresql/data
-      - ./pccc-service-incident-gis/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo DB lần đầu
+      - ./pccc-service-incident-gis/db/init:/docker-entrypoint-initdb.d:ro   # tự chạy *.sql theo thứ tự tên khi tạo CSDL lần đầu
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d pccc_incident_gis"]
       interval: 5s
@@ -134,11 +164,36 @@ services:
     environment:
       PORT: 3005
       SERVICE_NAME: pccc-service-incident-gis
-      DATABASE_URL: postgres://postgres:postgres@incident-gis-db:5432/pccc_incident_gis
-      JWT_SECRET: ${JWT_SECRET:-doi-thanh-chuoi-bi-mat-dai-it-nhat-32-ky-tu}
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@incident-gis-db:5432/pccc_incident_gis
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports: ["3005:3005"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3005/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
     depends_on:
       incident-gis-db:
+        condition: service_healthy
+
+  # API Gateway: một cổng vào chung, chuyển request tới đúng service (đổi cổng: GATEWAY_PORT trong .env)
+  gateway:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ["${GATEWAY_PORT:-8088}:80"]
+    depends_on:
+      auth:
+        condition: service_healthy
+      facility:
+        condition: service_healthy
+      equipment:
+        condition: service_healthy
+      inspection:
+        condition: service_healthy
+      incident-gis:
         condition: service_healthy
 
 volumes:
